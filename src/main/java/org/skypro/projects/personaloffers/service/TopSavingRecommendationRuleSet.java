@@ -1,6 +1,5 @@
 package org.skypro.projects.personaloffers.service;
 
-import org.skypro.projects.personaloffers.model.Offer;
 import org.skypro.projects.personaloffers.model.Product;
 import org.skypro.projects.personaloffers.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,7 @@ public class TopSavingRecommendationRuleSet implements RecommendationRuleSet {
     private ProductRepository productRepository;
 
     @Override
-    public Optional<Offer> applyRules(UUID userId) {
+    public Optional<Product> applyRules(UUID userId) {
 
         // Check if user uses at least one DEBIT type product
         List<Product> debitProducts = productRepository.findProductsByUserIdAndType(userId, "DEBIT");
@@ -45,7 +44,7 @@ public class TopSavingRecommendationRuleSet implements RecommendationRuleSet {
             return Optional.empty();
         }
 
-        Offer offer = new Offer();
+        Product offer = new Product();
         offer.setId(UUID.fromString("59efc529-2fff-41af-baff-90ccd7402925"));
         offer.setName("Top Saving");
         offer.setDescription("Откройте свою собственную «Копилку» с нашим банком! «Копилка» — это уникальный банковский инструмент, который поможет вам легко и удобно накапливать деньги на важные цели. Больше никаких забытых чеков и потерянных квитанций — всё под контролем!\n" +

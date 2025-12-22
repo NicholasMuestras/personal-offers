@@ -1,6 +1,5 @@
 package org.skypro.projects.personaloffers.service;
 
-import org.skypro.projects.personaloffers.model.Offer;
 import org.skypro.projects.personaloffers.model.Product;
 import org.skypro.projects.personaloffers.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,7 @@ public class SimpleCreditRecommendationRuleSet implements RecommendationRuleSet 
     private ProductRepository productRepository;
 
     @Override
-    public Optional<Offer> applyRules(UUID userId) {
+    public Optional<Product> applyRules(UUID userId) {
 
         // Check if user doesn't use any CREDIT type products
         List<Product> creditProducts = productRepository.findProductsByUserIdAndType(userId, "CREDIT");
@@ -41,7 +40,7 @@ public class SimpleCreditRecommendationRuleSet implements RecommendationRuleSet 
             return Optional.empty();
         }
 
-        Offer offer = new Offer();
+        Product offer = new Product();
         offer.setId(UUID.fromString("ab138afb-f3ba-4a93-b74f-0fcee86d447f"));
         offer.setName("Простой кредит");
         offer.setDescription("Откройте мир выгодных кредитов с нами!\n" +

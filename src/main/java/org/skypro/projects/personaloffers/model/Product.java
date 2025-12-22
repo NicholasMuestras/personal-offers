@@ -6,6 +6,7 @@ public class Product {
     private UUID id;
     private String type;
     private String name;
+    private String description;
 
     public Product() {
     }
@@ -16,6 +17,13 @@ public class Product {
         this.name = name;
     }
 
+    public Product(UUID id, String type, String name, String description) {
+        this.id = id;
+        this.type = type;
+        this.name = name;
+        this.description = description;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -23,8 +31,6 @@ public class Product {
     public void setId(UUID id) {
         this.id = id;
     }
-
-
 
     public String getType() {
         return type;
@@ -40,5 +46,13 @@ public class Product {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

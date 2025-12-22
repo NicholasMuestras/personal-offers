@@ -1,19 +1,19 @@
-package org.skypro.projects.personaloffers.model;
+package org.skypro.projects.personaloffers.dto;
 
 import java.util.UUID;
 
-public class Offer {
+public class ProductDto {
     private UUID id;
     private String name;
-    private String description;
+    private String text;
 
-    public Offer() {
+    public ProductDto() {
     }
 
-    public Offer(UUID id, String name, String description) {
+    public ProductDto(UUID id, String name, String text) {
         this.id = id;
         this.name = name;
-        this.description = description;
+        this.text = text;
     }
 
     public UUID getId() {
@@ -32,13 +32,11 @@ public class Offer {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public String getText() {
+        return text;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setText(String text) {
+        this.text = text;
     }
-
-
 }

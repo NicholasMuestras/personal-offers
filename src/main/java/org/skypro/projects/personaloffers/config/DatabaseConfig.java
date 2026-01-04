@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 @Configuration
 public class DatabaseConfig {
 
+    // Primary PostgreSQL DataSource
     @Primary
     @Bean
     @ConfigurationProperties("spring.datasource")
@@ -25,12 +27,14 @@ public class DatabaseConfig {
         return DataSourceBuilder.create().build();
     }
 
+    // Secondary H2 DataSource
     @Bean
     @ConfigurationProperties("spring.datasource.secondary")
     public DataSource secondaryDataSource() {
         return DataSourceBuilder.create().build();
     }
 
+    // Primary PostgreSQL EntityManagerFactory
     @Primary
     @Bean(name = "entityManagerFactory")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(
@@ -44,14 +48,16 @@ public class DatabaseConfig {
         em.setJpaVendorAdapter(vendorAdapter);
         
         HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
         properties.put("hibernate.hbm2ddl.auto", "none");
+        properties.put("hibernate.show_sql", "true");
         properties.put("hibernate.format_sql", "true");
         em.setJpaPropertyMap(properties);
         
         return em;
     }
     
+    // Secondary H2 EntityManagerFactory
     @Bean(name = "secondaryEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean secondaryEntityManagerFactory(
             @Qualifier("secondaryDataSource") DataSource dataSource) {
@@ -64,8 +70,9 @@ public class DatabaseConfig {
         em.setJpaVendorAdapter(vendorAdapter);
         
         HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "validate");
+        properties.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        properties.put("hibernate.hbm2ddl.auto", "none");
+        properties.put("hibernate.show_sql", "true");
         properties.put("hibernate.format_sql", "true");
         em.setJpaPropertyMap(properties);
         
@@ -81,11 +88,17 @@ public class DatabaseConfig {
         return transactionManager;
     }
     
+    // Secondary H2 Transaction Manager
     @Bean(name = "secondaryTransactionManager")
     public PlatformTransactionManager secondaryTransactionManager(
             @Qualifier("secondaryEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactory) {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory.getObject());
         return transactionManager;
+    }
+    
+    @Bean("secondaryJdbcTemplate")
+    public JdbcTemplate secondaryJdbcTemplate(@Qualifier("secondaryDataSource") DataSource dataSource) {
+        return new JdbcTemplate(dataSource);
     }
 }

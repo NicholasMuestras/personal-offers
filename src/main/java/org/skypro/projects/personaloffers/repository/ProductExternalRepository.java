@@ -2,6 +2,7 @@ package org.skypro.projects.personaloffers.repository;
 
 import org.skypro.projects.personaloffers.model.Product;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 public class ProductExternalRepository {
 
     @Autowired
+    @Qualifier("secondaryJdbcTemplate")
     private JdbcTemplate jdbcTemplate;
 
     public List<Product> findProductsByUserIdAndType(UUID userId, String type) {

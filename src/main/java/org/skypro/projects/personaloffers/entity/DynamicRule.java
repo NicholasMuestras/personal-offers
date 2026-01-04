@@ -1,11 +1,11 @@
 package org.skypro.projects.personaloffers.entity;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.util.List;
 import java.util.UUID;
-import org.skypro.projects.personaloffers.entity.Product;
-import org.skypro.projects.personaloffers.converter.TermListConverter;
 
 @Entity
 @Table(name = "rules")
@@ -15,10 +15,10 @@ public class DynamicRule {
     private UUID id;
 
     @Column(columnDefinition = "jsonb")
-    @Convert(converter = TermListConverter.class)
-    private List<Term> terms = new ArrayList<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Term> terms = List.of();
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id")
     private Product product;
 
@@ -28,5 +28,25 @@ public class DynamicRule {
     public DynamicRule(List<Term> terms, Product product) {
         this.terms = terms;
         this.product = product;
+    }
+
+    public void setTerms(List<Term> terms) {
+        this.terms = terms;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public List<Term> getTerms() {
+        return terms;
     }
 }

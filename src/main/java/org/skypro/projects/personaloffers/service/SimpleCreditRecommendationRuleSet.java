@@ -1,7 +1,7 @@
 package org.skypro.projects.personaloffers.service;
 
 import org.skypro.projects.personaloffers.model.Product;
-import org.skypro.projects.personaloffers.repository.ProductRepository;
+import org.skypro.projects.personaloffers.repository.ProductExternalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ import java.util.UUID;
 public class SimpleCreditRecommendationRuleSet implements RecommendationRuleSet {
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductExternalRepository productRepository;
 
     @Override
     public Optional<Product> applyRules(UUID userId) {

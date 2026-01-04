@@ -1,20 +1,35 @@
 package org.skypro.projects.personaloffers.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.DynamicUpdate;
+
 import java.util.UUID;
 
 @Entity
 @Table(name = "products")
+@DynamicUpdate
 public class Product {
     @Id
-    @GeneratedValue
     private UUID id;
-    
+
     @Transient
     private String type;
-    
-    @Column(nullable = false)
+
+    @Column(nullable = false, length = 255)
     private String name;
+
+    @Column(name = "description", nullable = true, length = 2048)
+    private String description;
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", type='" + type + '\'' +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
 
     public Product() {
     }
@@ -47,5 +62,14 @@ public class Product {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

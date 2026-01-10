@@ -3,7 +3,7 @@ package org.skypro.projects.personaloffers.controller;
 import org.skypro.projects.personaloffers.dto.ProductDto;
 import org.skypro.projects.personaloffers.dto.RecommendationResponse;
 import org.skypro.projects.personaloffers.model.Product;
-import org.skypro.projects.personaloffers.service.ProductService;
+import org.skypro.projects.personaloffers.service.OffersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,13 +20,13 @@ import java.util.stream.Collectors;
 public class OfferController {
 
     @Autowired
-    private ProductService productService;
+    private OffersService offersService;
 
     @GetMapping("/recommendation/{userId}")
     public ResponseEntity<RecommendationResponse> getRecommendation(@PathVariable String userId) {
         try {
             UUID userUUID = UUID.fromString(userId);
-            List<Product> offers = productService.getRecommendations(userUUID);
+            List<Product> offers = offersService.getRecommendations(userUUID);
 
             List<ProductDto> offerDtos = offers.stream()
                     .map(offer -> new ProductDto(offer.getId(), offer.getName(),

@@ -1,7 +1,8 @@
-package org.skypro.projects.personaloffers.service;
+package org.skypro.projects.personaloffers.service.ruleset;
 
 import org.skypro.projects.personaloffers.model.Product;
 import org.skypro.projects.personaloffers.repository.ProductExternalRepository;
+import org.skypro.projects.personaloffers.service.RecommendationRuleSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class SimpleCreditRecommendationRuleSet implements RecommendationRuleSet {
+public class SimpleCreditRuleSet implements RecommendationRuleSet {
 
     @Autowired
     private ProductExternalRepository productRepository;
@@ -40,6 +41,10 @@ public class SimpleCreditRecommendationRuleSet implements RecommendationRuleSet 
             return Optional.empty();
         }
 
+        return Optional.of(this.getProduct());
+    }
+
+    private Product getProduct() {
         Product offer = new Product();
         offer.setId(UUID.fromString("ab138afb-f3ba-4a93-b74f-0fcee86d447f"));
         offer.setName("Простой кредит");
@@ -57,6 +62,6 @@ public class SimpleCreditRecommendationRuleSet implements RecommendationRuleSet 
                 "\n" +
                 "Не упустите возможность воспользоваться выгодными условиями кредитования от нашей компании!");
 
-        return Optional.of(offer);
+        return offer;
     }
 }

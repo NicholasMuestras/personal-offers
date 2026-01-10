@@ -1,7 +1,8 @@
-package org.skypro.projects.personaloffers.service;
+package org.skypro.projects.personaloffers.service.ruleset;
 
 import org.skypro.projects.personaloffers.model.Product;
 import org.skypro.projects.personaloffers.repository.ProductExternalRepository;
+import org.skypro.projects.personaloffers.service.RecommendationRuleSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class TopSavingRecommendationRuleSet implements RecommendationRuleSet {
+public class TopSavingRuleSet implements RecommendationRuleSet {
 
     @Autowired
     private ProductExternalRepository productRepository;
@@ -44,6 +45,10 @@ public class TopSavingRecommendationRuleSet implements RecommendationRuleSet {
             return Optional.empty();
         }
 
+        return Optional.of(this.getProduct());
+    }
+
+    private Product getProduct() {
         Product offer = new Product();
         offer.setId(UUID.fromString("59efc529-2fff-41af-baff-90ccd7402925"));
         offer.setName("Top Saving");
@@ -59,6 +64,6 @@ public class TopSavingRecommendationRuleSet implements RecommendationRuleSet {
                 "\n" +
                 "Начните использовать «Копилку» уже сегодня и станьте ближе к своим финансовым целям!");
 
-        return Optional.of(offer);
+        return offer;
     }
 }

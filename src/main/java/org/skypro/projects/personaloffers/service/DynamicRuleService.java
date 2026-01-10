@@ -15,7 +15,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 @Service
-public class RuleService {
+public class DynamicRuleService {
 
     @Autowired
     private DynamicRuleRepository ruleRepository;
@@ -42,7 +42,7 @@ public class RuleService {
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public DynamicRule createRule(UUID productId, String productName, String productText, List<Term> terms) {
-        Logger logger = Logger.getLogger(RuleService.class.getName());
+        Logger logger = Logger.getLogger(DynamicRuleService.class.getName());
         logger.info("Creating rule for product ID: " + productId);
 
         Product product = productRepository.findById(productId).orElse(null);

@@ -3,7 +3,7 @@ package org.skypro.projects.personaloffers.controller;
 import org.skypro.projects.personaloffers.dto.RuleRequest;
 import org.skypro.projects.personaloffers.dto.RuleResponse;
 import org.skypro.projects.personaloffers.entity.DynamicRule;
-import org.skypro.projects.personaloffers.service.RuleService;
+import org.skypro.projects.personaloffers.service.DynamicRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,30 +17,30 @@ import java.util.stream.Collectors;
 public class RuleController {
 
     @Autowired
-    private RuleService ruleService;
+    private DynamicRuleService dynamicRuleService;
 
     @PostMapping
     public ResponseEntity<RuleResponse> addRule(@RequestBody RuleRequest request) {
-        DynamicRule rule = ruleService.createRule(
+        DynamicRule rule = dynamicRuleService.createRule(
                 request.getProductId(),
                 request.getProductName(),
                 request.getProductText(),
                 request.getRule()
         );
 
-        DynamicRule savedRule = ruleService.save(rule);
+        DynamicRule savedRule = dynamicRuleService.save(rule);
         return ResponseEntity.ok(new RuleResponse(savedRule));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRule(@PathVariable UUID id) {
-        ruleService.delete(id);
+        dynamicRuleService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
     public ResponseEntity<List<RuleResponse>> getRules() {
-        List<DynamicRule> rules = ruleService.getAll();
+        List<DynamicRule> rules = dynamicRuleService.getAll();
         List<RuleResponse> response = rules.stream()
                 .map(RuleResponse::new)
                 .collect(Collectors.toList());

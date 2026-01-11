@@ -1,8 +1,11 @@
 package org.skypro.projects.personaloffers.repository;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.skypro.projects.personaloffers.model.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -10,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Repository
 public class ProductExternalRepository {
@@ -18,11 +22,31 @@ public class ProductExternalRepository {
     @Qualifier("secondaryJdbcTemplate")
     private JdbcTemplate jdbcTemplate;
 
-    /**
-     * Выполняет запрос по его имени с параметрами и userId
-     */
+    private final Cache<QueryKey, Boolean> queryCache;
+
+    
+    @Value("${product.external.repository.cache.expiration.minutes:1}")
+    private int cacheExpirationMinutes;
+
+    @Value("${product.external.repository.cache.maximum.size:1000}")
+    private int cacheMaximumSize;
+
+    
+    public ProductExternalRepository() {
+        this.queryCache = Caffeine.newBuilder()
+            .expireAfterWrite(cacheExpirationMinutes, TimeUnit.MINUTES)
+            .maximumSize(cacheMaximumSize)
+            .build();
+    }
+
     public boolean evaluateQuery(String queryName, UUID userId, List<String> arguments) {
-        // Формируем SQL-запрос динамически, чтобы корректно поддерживать IN-клаузу
+        QueryKey key = new QueryKey(queryName, userId, arguments);
+        
+        Boolean cachedResult = queryCache.getIfPresent(key);
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+        
         StringBuilder sqlBuilder = new StringBuilder();
 
         switch (queryName) {
@@ -54,7 +78,7 @@ public class ProductExternalRepository {
                 sqlBuilder.append("WITH deposit_sum AS (SELECT COALESCE(SUM(t1.AMOUNT), 0) as sum FROM TRANSACTIONS t1 JOIN PRODUCTS p1 ON t1.PRODUCT_ID = p1.ID WHERE t1.USER_ID = ? AND p1.TYPE = ? AND t1.TYPE = 'DEPOSIT'), ");
                 sqlBuilder.append("withdraw_sum AS (SELECT COALESCE(SUM(t2.AMOUNT), 0) as sum FROM TRANSACTIONS t2 JOIN PRODUCTS p2 ON t2.PRODUCT_ID = p2.ID WHERE t2.USER_ID = ? AND p2.TYPE = ? AND t2.TYPE = 'WITHDRAW') ");
                 sqlBuilder.append("SELECT CASE WHEN d.sum ");
-                sqlBuilder.append(arguments.get(1)); // оператор сравнения
+                sqlBuilder.append(arguments.get(1));
                 sqlBuilder.append(" w.sum THEN 1 ELSE 0 END FROM deposit_sum d, withdraw_sum w");
                 break;
             default:
@@ -64,93 +88,72 @@ public class ProductExternalRepository {
         String sql = sqlBuilder.toString();
 
         try {
-            // Проверяем, что передан хотя бы один тип продукта
             if (arguments.isEmpty()) {
+                queryCache.put(key, false);
                 return false;
             }
 
-            // Проверяем, что все аргументы - допустимые типы продуктов
             for (String arg : arguments) {
                 if (!isValidProductType(arg)) {
+                    queryCache.put(key, false);
                     return false;
                 }
             }
 
             Object[] params;
             Integer count;
+            boolean result;
 
             if ("TRANSACTION_SUM_COMPARE".equals(queryName)) {
-                // Для TRANSACTION_SUM_COMPARE используем специальную логику
                 validateTransactionSumCompareArguments(arguments);
 
-                // Извлекаем параметры
                 String productType = arguments.get(0);
                 String transactionType = arguments.get(1);
                 String operator = arguments.get(2);
                 int comparisonValue = Integer.parseInt(arguments.get(3));
 
-                // Выполняем запрос для получения суммы транзакций
                 Double sum = jdbcTemplate.queryForObject(sql, Double.class, userId, productType, transactionType);
 
-                // Сравниваем сумму с пороговым значением
-                return compareValues(sum != null ? sum : 0, comparisonValue, operator);
+                result = compareValues(sum != null ? sum : 0, comparisonValue, operator);
             } else if ("TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW".equals(queryName)) {
-                // Для TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW используем специальную логику
                 validateTransactionSumCompareDepositWithdrawArguments(arguments);
 
-                // Извлекаем параметры
                 String productType = arguments.get(0);
                 String operator = arguments.get(1);
 
-                // Выполняем запрос для получения результата сравнения
-                Integer result = jdbcTemplate.queryForObject(sql, Integer.class, userId, productType, userId, productType);
-                return result != null && result == 1;
+                Integer queryResult = jdbcTemplate.queryForObject(sql, Integer.class, userId, productType, userId, productType);
+                result = queryResult != null && queryResult == 1;
             } else {
-                // Формируем массив параметров: userId + все типы продуктов
                 params = new Object[arguments.size() + 1];
                 params[0] = userId;
                 for (int i = 0; i < arguments.size(); i++) {
                     params[i + 1] = arguments.get(i);
                 }
 
-                // Выполняем один запрос с IN-клаузой
                 count = jdbcTemplate.queryForObject(sql, Integer.class, params);
-                if (count == null || count == 0) {
-                    return false;
-                }
-
-                // Все проверки пройдены
-                return true;
+                result = count != null && count > 0;
             }
+            
+            queryCache.put(key, result);
+            return result;
         } catch (Exception e) {
+            queryCache.put(key, false);
             return false;
         }
     }
 
-    /**
-     * Проверяет, является ли тип продукта допустимым
-     */
     private boolean isValidProductType(String type) {
         return List.of("DEBIT", "CREDIT", "INVEST", "SAVING").contains(type);
     }
 
-    /**
-     * Проверяет, является ли тип транзакции допустимым
-     */
     private boolean isValidTransactionType(String type) {
         return List.of("DEPOSIT", "WITHDRAW").contains(type);
     }
 
-    /**
-     * Проверяет, является ли оператор сравнения допустимым
-     */
     private boolean isValidOperator(String operator) {
-        return List.of("<", "<=", ">", ">=", "=").contains(operator);
+        return List.of("<", "<=" , ">", ">=", "=").contains(operator);
     }
 
-    /**
-     * Проверяет корректность аргументов для TRANSACTION_SUM_COMPARE
-     */
     private void validateTransactionSumCompareArguments(List<String> arguments) {
         if (arguments.size() != 4) {
             throw new IllegalArgumentException("TRANSACTION_SUM_COMPARE requires exactly 4 arguments: productType, transactionType, operator, comparisonValue");
@@ -180,9 +183,6 @@ public class ProductExternalRepository {
         }
     }
 
-    /**
-     * Проверяет корректность аргументов для TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW
-     */
     private void validateTransactionSumCompareDepositWithdrawArguments(List<String> arguments) {
         if (arguments.size() != 2) {
             throw new IllegalArgumentException("TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW requires exactly 2 arguments: productType, operator");
@@ -218,8 +218,8 @@ public class ProductExternalRepository {
         return String.join(",", "?".repeat(size));
     }
 
-    // Static RulesSets support here:
-
+    // StaticRulesSets support here:
+    
     public List<Product> findProductsByUserIdAndType(UUID userId, String type) {
         String sql = "SELECT DISTINCT p.ID, p.TYPE, p.NAME " +
                 "FROM PRODUCTS p " +

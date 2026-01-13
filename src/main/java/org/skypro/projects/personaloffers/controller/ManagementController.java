@@ -2,10 +2,7 @@ package org.skypro.projects.personaloffers.controller;
 
 import org.skypro.projects.personaloffers.service.ManagementService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/management")
@@ -21,5 +18,10 @@ public class ManagementController {
     @ResponseStatus(HttpStatus.OK)
     public void clearCaches() {
         managementService.clearCaches();
+    }
+
+    @GetMapping("/info")
+    public ManagementService.ServiceInfo getInfo() {
+        return managementService.getServiceInfo();
     }
 }

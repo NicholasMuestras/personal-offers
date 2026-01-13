@@ -2,14 +2,17 @@ package org.skypro.projects.personaloffers.service;
 
 import org.skypro.projects.personaloffers.entity.DynamicRule;
 import org.skypro.projects.personaloffers.entity.Product;
+import org.skypro.projects.personaloffers.entity.RuleStats;
 import org.skypro.projects.personaloffers.entity.Term;
 import org.skypro.projects.personaloffers.repository.DynamicRuleRepository;
 import org.skypro.projects.personaloffers.repository.ProductRepository;
+import org.skypro.projects.personaloffers.repository.RuleStatsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.Iterable;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -23,12 +26,26 @@ public class DynamicRuleService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private RuleStatsRepository ruleStatsRepository;
+
     @Transactional
     public DynamicRule save(DynamicRule rule) {
-        return ruleRepository.save(rule);
+        DynamicRule savedRule = ruleRepository.save(rule);
+        
+        if (ruleStatsRepository.findById(savedRule.getId()).isEmpty()) {
+            RuleStats ruleStats = new RuleStats();
+            ruleStats.setRuleId(savedRule.getId());
+            ruleStats.setCount(0L);
+            ruleStatsRepository.save(ruleStats);
+        }
+        
+        return savedRule;
     }
 
+    @Transactional
     public void delete(UUID id) {
+        ruleStatsRepository.deleteByRuleId(id);
         ruleRepository.deleteById(id);
     }
 
@@ -38,6 +55,10 @@ public class DynamicRuleService {
 
     public DynamicRule getRuleById(UUID id) {
         return ruleRepository.findById(id).orElse(null);
+    }
+
+    public Iterable<Object[]> getRuleStats() {
+        return ruleStatsRepository.getRuleStats();
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -62,6 +83,7 @@ public class DynamicRuleService {
         DynamicRule rule = new DynamicRule();
         rule.setTerms(terms);
         rule.setProduct(product);
+        
         return rule;
     }
 }

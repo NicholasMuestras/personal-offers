@@ -5,6 +5,7 @@ import org.skypro.projects.personaloffers.entity.Term;
 import org.skypro.projects.personaloffers.model.Product;
 import org.skypro.projects.personaloffers.repository.DynamicRuleRepository;
 import org.skypro.projects.personaloffers.repository.ProductExternalRepository;
+import org.skypro.projects.personaloffers.repository.RuleStatsRepository;
 import org.skypro.projects.personaloffers.service.RuleSetsEvaluator;
 import org.springframework.stereotype.Service;
 
@@ -18,18 +19,33 @@ public class DynamicRulesEvaluator implements RuleSetsEvaluator {
     private final List<Product> productsToOffer = new ArrayList<>(10);
     private final DynamicRuleRepository dynamicRuleRepository;
     private final ProductExternalRepository productExternalRepository;
+    private final RuleStatsRepository ruleStatsRepository;
 
-    public DynamicRulesEvaluator(DynamicRuleRepository dynamicRuleRepository, ProductExternalRepository productExternalRepository) {
+    public DynamicRulesEvaluator(
+            DynamicRuleRepository dynamicRuleRepository,
+            ProductExternalRepository productExternalRepository,
+            RuleStatsRepository ruleStatsRepository
+    ) {
         this.dynamicRuleRepository = dynamicRuleRepository;
         this.productExternalRepository = productExternalRepository;
+        this.ruleStatsRepository = ruleStatsRepository;
     }
 
     public List<Product> getProductsForClient(UUID clientId) {
         List<DynamicRule> dynamicRulesSets = this.dynamicRuleRepository.findAll();
+        List<UUID> rulesIds = new ArrayList<>(dynamicRulesSets.size());
 
         for (DynamicRule ruleSet : dynamicRulesSets) {
             Optional<Product> offer = this.evaluate(ruleSet, clientId);
-            offer.ifPresent(this.productsToOffer::add);
+
+            if (offer.isPresent()) {
+                this.productsToOffer.add(offer.get());
+                rulesIds.add(ruleSet.getId());
+            }
+        }
+
+        if (!rulesIds.isEmpty()) {
+            this.ruleStatsRepository.incrementCountByRuleIds(rulesIds);
         }
 
         return this.productsToOffer;

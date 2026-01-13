@@ -5,12 +5,12 @@ import java.util.UUID;
 
 public class RecommendationResponse {
     private UUID user_id;
-    private List<OfferDto> recommendations;
+    private List<ProductDto> recommendations;
 
     public RecommendationResponse() {
     }
 
-    public RecommendationResponse(UUID user_id, List<OfferDto> recommendations) {
+    public RecommendationResponse(UUID user_id, List<ProductDto> recommendations) {
         this.user_id = user_id;
         this.recommendations = recommendations;
     }
@@ -23,11 +23,11 @@ public class RecommendationResponse {
         this.user_id = user_id;
     }
 
-    public List<OfferDto> getRecommendations() {
+    public List<ProductDto> getRecommendations() {
         return recommendations;
     }
 
-    public void setRecommendations(List<OfferDto> recommendations) {
+    public void setRecommendations(List<ProductDto> recommendations) {
         this.recommendations = recommendations;
     }
 }

@@ -1,8 +1,8 @@
-package org.skypro.projects.personaloffers.service;
+package org.skypro.projects.personaloffers.service.ruleset;
 
-import org.skypro.projects.personaloffers.model.Offer;
 import org.skypro.projects.personaloffers.model.Product;
-import org.skypro.projects.personaloffers.repository.ProductRepository;
+import org.skypro.projects.personaloffers.repository.ProductExternalRepository;
+import org.skypro.projects.personaloffers.service.RecommendationRuleSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -11,13 +11,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class Invest500RecommendationRuleSet implements RecommendationRuleSet {
+public class Invest500RuleSet implements RecommendationRuleSet {
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductExternalRepository productRepository;
 
     @Override
-    public Optional<Offer> applyRules(UUID userId) {
+    public Optional<Product> applyRules(UUID userId) {
 
         // Check if user uses at least one DEBIT type product
         List<Product> debitProducts = productRepository.findProductsByUserIdAndType(userId, "DEBIT");
@@ -37,11 +37,15 @@ public class Invest500RecommendationRuleSet implements RecommendationRuleSet {
             return Optional.empty();
         }
 
-        Offer offer = new Offer();
+        return Optional.of(this.getProduct());
+    }
+
+    private Product getProduct() {
+        Product offer = new Product();
         offer.setId(UUID.fromString("147f6a0f-3b91-413b-ab99-87f081d60d5a"));
         offer.setName("Invest 500");
         offer.setDescription("Откройте свой путь к успеху с индивидуальным инвестиционным счетом (ИИС) от нашего банка! Воспользуйтесь налоговыми льготами и начните инвестировать с умом. Пополните счет до конца года и получите выгоду в виде вычета на взнос в следующем налоговом периоде. Не упустите возможность разнообразить свой портфель, снизить риски и следить за актуальными рыночными тенденциями. Откройте ИИС сегодня и станьте ближе к финансовой независимости!");
 
-        return Optional.of(offer);
+        return offer;
     }
 }

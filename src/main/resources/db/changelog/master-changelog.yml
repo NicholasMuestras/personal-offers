@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/scripts/products.sql
   - include:
       file: db/changelog/scripts/rules.sql
+  - include:
+      file: db/changelog/scripts/rule_stats.sql

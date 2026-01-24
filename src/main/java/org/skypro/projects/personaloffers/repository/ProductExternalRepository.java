@@ -39,6 +39,10 @@ public class ProductExternalRepository {
             .build();
     }
 
+    public void clearCaches() {
+        queryCache.invalidateAll();
+    }
+
     public boolean evaluateQuery(String queryName, UUID userId, List<String> arguments) {
         QueryKey key = new QueryKey(queryName, userId, arguments);
         
